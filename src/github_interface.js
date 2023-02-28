@@ -120,21 +120,7 @@ function UpdateFileName(fileName, extension) {
     return fileName.join('.');
 }
 
-// BuildHTML outputs the HTML string to a file
-function BuildHTML(result, file) {
-    file = UpdateFileName(file, 'html');
-    result.writeHTML(OutputDir + file);
-    console.log('Built HTML file: ' + file);
-}
-
-// BuildPDF outputs the PDF file after building it via a chromium package
-function BuildPDF(result, file) {
-    file = UpdateFileName(file, 'pdf');
-    result.writePDF(OutputDir + file);
-    console.log('Build PDF file: ' + file);
-}
-
-async function ConvertMarkdown(file) {
+async function ConvertMarkdown(file, outputPath) {
     // Get the content of the MD file and convert it
     console.log('Converting: ' + file);
     let result = await md.convert(
@@ -144,16 +130,12 @@ async function ConvertMarkdown(file) {
         return result;
     }).catch(function (err) {
         throw ` Trouble converting markdown files: ${err}`;
-    })
-
-    // If the `build_html` environment variable is true, build the HTML
-    if (build_html === true) {
-        BuildHTML(result, file);
-    }
+    });
 
     // Build the PDF file
     if (build_pdf === true) {
-        BuildPDF(result, file);
+        result.writePDF(outputPath);
+        console.log('Build PDF file: ' + outputPath);
     }
 }
 
@@ -176,23 +158,26 @@ md.start();
 
 if (InputPathIsDir) {
     // Handle case that user supplied path to directory of markdown files
-
-    fs.readdir(InputPath, async function (err, files) {
-        files = GetMarkdownFiles(files);
-        if (files.length === 0) throw 'No markdown files found! Exiting.';
-
-        console.log('Markdown files found: ' + files.join(', '));
-
-        // Loop through each file converting it
+    const processDirectory = async (dirPath) => {
+        const files = await fs.promises.readdir(dirPath);
         for (let file of files) {
-            await ConvertMarkdown(file).catch(function (err) {
-                throw ` Trouble converting markdown files: ${err}`;
-            })
+            const filePath = path.join(dirPath, file);
+            const stat = await fs.promises.lstat(filePath);
+            if (stat.isDirectory()) {
+                await processDirectory(filePath);
+            } else if (path.extname(file).match(/^(.md|.markdown)$/)) {
+                const fileName = path.basename(file, path.extname(file));
+                const outputPath = path.join(path.dirname(filePath), `${fileName}.pdf`);
+                await ConvertMarkdown(file, outputPath);
+            }
         }
+    };
 
-        // Close the image server
-        md.close();
-    });
+    await processDirectory(InputPath);
+    // Handle case that user supplied path to directory of markdown files
+
+    // Close the image server
+    md.close();
 } else {
     // Handle case that user supplied path to one markdown file
 
