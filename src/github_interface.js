@@ -169,7 +169,7 @@ if (InputPathIsDir) {
                 } else if (path.extname(file).match(/^(.md|.markdown)$/)) {
                     const fileName = path.basename(file, path.extname(file));
                     const outputPath = path.join(path.dirname(filePath), `${fileName}.pdf`);
-                    await ConvertMarkdown(file, outputPath);
+                    await ConvertMarkdown(filePath, outputPath);
                 }
             }
         };
