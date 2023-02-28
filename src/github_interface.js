@@ -50,10 +50,6 @@ if (InputPathIsDir) {
 
 // Other GitHub Action inputs that are needed for this program to run
 const ImageImport = getRunnerInput('image_import', null);
-const ImageDir = getRunnerInput('images_dir',
-    InputPathIsDir ? InputPath : path.dirname(InputPath) + '/' +
-        md2pdf.nullCoalescing(ImageImport, ''),
-    getRunnerPath);
 
 // Optional input, though recommended
 let OutputDir = getRunnerInput('output_dir', 'built', getRunnerPath);
@@ -145,17 +141,6 @@ const style = (extend_default_theme ? md2pdf.getFileContent(DEFAULT_THEME_FILE) 
     + md2pdf.getFileContent(HighlightThemeFile);
 const template = md2pdf.getFileContent(TemplateFile);
 
-let md = new md2pdf({
-    image_import: ImageImport,
-    image_dir: ImageDir,
-
-    style: style,
-    template: template,
-
-    table_of_contents: table_of_contents,
-});
-md.start();
-
 if (InputPathIsDir) {
     (async () => {
         // Handle case that user supplied path to directory of markdown files
@@ -164,21 +149,43 @@ if (InputPathIsDir) {
             for (let file of files) {
                 const filePath = path.join(dirPath, file);
                 const stat = await fs.promises.lstat(filePath);
+
                 if (stat.isDirectory()) {
                     await processDirectory(filePath);
                 } else if (path.extname(file).match(/^(.md|.markdown)$/)) {
+                    let md = new md2pdf({
+                        image_import: ImageImport,
+                        image_dir: path.join(dirPath, ImageImport),
+                    
+                        style: style,
+                        template: template,
+                    
+                        table_of_contents: table_of_contents,
+                    });
+                    md.start();
+
                     const fileName = path.basename(file, path.extname(file));
                     const outputPath = path.join(path.dirname(filePath), `${fileName}.pdf`);
                     await ConvertMarkdown(filePath, outputPath);
+
+                    // Close the image server
+                    md.close();
                 }
             }
         };
         await processDirectory(InputPath);
-
-        // Close the image server
-        md.close();
     })();
 } else {
+    let md = new md2pdf({
+        image_import: ImageImport,
+        image_dir: null,
+    
+        style: style,
+        template: template,
+    
+        table_of_contents: table_of_contents,
+    });
+    md.start();
     // Handle case that user supplied path to one markdown file
 
     // This is wrapped in an anonymous function to allow async/await.
