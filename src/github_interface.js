@@ -106,7 +106,7 @@ function GetMarkdownFiles(files) {
 // GetFileBody retrieves the file content as a string
 function GetFileBody(file) {
     return md2pdf.getFileContent(
-        (InputPathIsDir ? InputPath + file : InputPath)
+        (InputPathIsDir ? file : InputPath)
     );
 }
 
