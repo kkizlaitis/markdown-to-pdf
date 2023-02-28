@@ -157,27 +157,27 @@ let md = new md2pdf({
 md.start();
 
 if (InputPathIsDir) {
-    // Handle case that user supplied path to directory of markdown files
-    const processDirectory = async (dirPath) => {
-        const files = await fs.promises.readdir(dirPath);
-        for (let file of files) {
-            const filePath = path.join(dirPath, file);
-            const stat = await fs.promises.lstat(filePath);
-            if (stat.isDirectory()) {
-                await processDirectory(filePath);
-            } else if (path.extname(file).match(/^(.md|.markdown)$/)) {
-                const fileName = path.basename(file, path.extname(file));
-                const outputPath = path.join(path.dirname(filePath), `${fileName}.pdf`);
-                await ConvertMarkdown(file, outputPath);
+    (async () => {
+        // Handle case that user supplied path to directory of markdown files
+        const processDirectory = async (dirPath) => {
+            const files = await fs.promises.readdir(dirPath);
+            for (let file of files) {
+                const filePath = path.join(dirPath, file);
+                const stat = await fs.promises.lstat(filePath);
+                if (stat.isDirectory()) {
+                    await processDirectory(filePath);
+                } else if (path.extname(file).match(/^(.md|.markdown)$/)) {
+                    const fileName = path.basename(file, path.extname(file));
+                    const outputPath = path.join(path.dirname(filePath), `${fileName}.pdf`);
+                    await ConvertMarkdown(file, outputPath);
+                }
             }
-        }
-    };
+        };
+        await processDirectory(InputPath);
 
-    await processDirectory(InputPath);
-    // Handle case that user supplied path to directory of markdown files
-
-    // Close the image server
-    md.close();
+        // Close the image server
+        md.close();
+    })();
 } else {
     // Handle case that user supplied path to one markdown file
 
