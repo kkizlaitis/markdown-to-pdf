@@ -51,17 +51,6 @@ if (InputPathIsDir) {
 // Other GitHub Action inputs that are needed for this program to run
 const ImageImport = getRunnerInput('image_import', null);
 
-// Optional input, though recommended
-let OutputDir = getRunnerInput('output_dir', 'built', getRunnerPath);
-let OutputDirIsDir = false
-try {
-    OutputDirIsDir = fs.lstatSync(OutputDir).isDirectory();
-} catch { }
-if (!OutputDirIsDir) {
-    OutputDir += OutputDir.endsWith("/") ? "" : "/"
-    CreateOutputDirectory(OutputDir);
-}
-
 // Whether to also output a <filename>.html file, there is a bit of magic at the end to ensure that the value is a boolean
 const build_html = getRunnerInput('build_html', true, booleanTransformer);
 
@@ -80,13 +69,6 @@ const extend_default_theme = getRunnerInput('extend_default_theme', true, boolea
 // Table Of Contents settings
 const table_of_contents = getRunnerInput('table_of_contents', false, booleanTransformer);
 
-
-// CreateOutputDirectory creates the output directory if it doesn't exist
-function CreateOutputDirectory(dirname) {
-    if (!fs.existsSync(dirname)) {
-        fs.mkdirSync(dirname);
-    }
-}
 
 // GetMarkdownFiles returns an array of only files ending in .md or .markdown
 // NOTE: When a file name is the same, eg. happy.md and happy.markdown, only one file is
