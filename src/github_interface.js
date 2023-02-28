@@ -116,7 +116,7 @@ function UpdateFileName(fileName, extension) {
     return fileName.join('.');
 }
 
-async function ConvertMarkdown(file, outputPath) {
+async function ConvertMarkdown(md, file, outputPath) {
     // Get the content of the MD file and convert it
     console.log('Converting: ' + file);
     let result = await md.convert(
@@ -166,7 +166,7 @@ if (InputPathIsDir) {
 
                     const fileName = path.basename(file, path.extname(file));
                     const outputPath = path.join(path.dirname(filePath), `${fileName}.pdf`);
-                    await ConvertMarkdown(filePath, outputPath);
+                    await ConvertMarkdown(md, filePath, outputPath);
 
                     // Close the image server
                     md.close();
@@ -198,7 +198,7 @@ if (InputPathIsDir) {
         console.log('Markdown file found: ' + files, files[0]);
 
         // Convert the file
-        await ConvertMarkdown(files[0]).catch(function (err) {
+        await ConvertMarkdown(md, files[0]).catch(function (err) {
             throw ` Trouble converting markdown files: ${err}`;
         })
 
